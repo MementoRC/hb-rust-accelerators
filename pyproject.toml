@@ -26,6 +26,7 @@ python = ">=3.10,<3.13"
 numpy = ">=1.20.0"
 rust = ">=1.75"
 maturin = ">=1.0"
+uv = "*"
 
 [tool.pixi.feature.dev.dependencies]
 pytest = ">=8.0"
@@ -92,8 +93,8 @@ quality = { depends-on = ["lint", "format-check"] }
 check = { depends-on = ["quality", "test"] }
 security = "bandit -c pyproject.toml -r python/rust_accelerators/"
 type-check = "mypy python/rust_accelerators"
-rust-build = "maturin develop --release"
-rust-build-debug = "maturin develop"
+rust-build = "maturin develop --uv --release"
+rust-build-debug = "maturin develop --uv"
 rust-test = { depends-on = ["rust-build", "test"] }
 rust-bench = "pytest tests/benchmarks/ --benchmark-enable"
 
