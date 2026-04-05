@@ -20,6 +20,7 @@ try:
     from rust_accelerators._core import (
         calculate_sharpe_ratio as _rs_calculate_sharpe_ratio,
     )
+
     _ACCELERATED = True
 except ImportError:
     _ACCELERATED = False
