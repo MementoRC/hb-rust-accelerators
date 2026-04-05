@@ -1,0 +1,7 @@
+* @MementoRC
+/src/ @MementoRC
+/python/ @MementoRC
+/tests/ @MementoRC
+/.github/ @MementoRC
+/pyproject.toml @MementoRC
+/Cargo.toml @MementoRC

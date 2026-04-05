@@ -1,0 +1,29 @@
+# Rust
+target/
+Cargo.lock
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.so
+*.whl
+
+# IDE
+.idea/
+.vscode/
+
+# Environment
+.pixi/
+pixi.lock
+
+# OS
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/

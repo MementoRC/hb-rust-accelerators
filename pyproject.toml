@@ -1,0 +1,146 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "hb-rust-accelerators"
+dynamic = ["version"]
+description = "PyO3-based Rust acceleration modules for hummingbot sub-packages"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+dependencies = [
+    "numpy>=1.20.0",
+]
+
+[project.optional-dependencies]
+testing = [
+    "pytest>=8.0",
+    "pytest-benchmark>=4.0",
+]
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+python-source = "python"
+module-name = "rust_accelerators._core"
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64", "osx-64"]
+
+[tool.pixi.dependencies]
+python = ">=3.10,<3.13"
+numpy = ">=1.20.0"
+rust = ">=1.75"
+maturin = ">=1.0"
+
+[tool.pixi.feature.dev.dependencies]
+pytest = ">=8.0"
+pytest-asyncio = ">=0.24"
+pytest-cov = "*"
+pytest-xdist = "*"
+pytest-timeout = "*"
+pytest-benchmark = ">=4.0"
+ruff = "*"
+mypy = "*"
+
+[tool.pixi.feature.ci.dependencies]
+ruff = ">=0.1.6"
+mypy = ">=1.5.1"
+pytest = ">=8.0"
+pytest-cov = ">=4.1.0"
+pytest-timeout = "*"
+pre-commit = ">=2.15.0"
+bandit = ">=1.8.0"
+types-setuptools = "*"
+
+[tool.pixi.feature.quality-extended.dependencies]
+bandit = ">=1.8.0"
+pip-audit = "*"
+filelock = "*"
+
+[tool.pixi.feature.quality-extended.tasks]
+security-scan = "bandit -c pyproject.toml -r python/rust_accelerators/"
+safety-check = "pip-audit"
+
+[tool.pixi.feature.quality-ci.dependencies]
+maturin = ">=1.0"
+
+[tool.pixi.feature.quality-ci.tasks]
+build = "maturin build"
+
+[tool.pixi.feature.py310.dependencies]
+python = "3.10.*"
+
+[tool.pixi.feature.py311.dependencies]
+python = "3.11.*"
+
+[tool.pixi.feature.py312.dependencies]
+python = "3.12.*"
+
+[tool.pixi.environments]
+default = { features = ["dev"], solve-group = "default" }
+ci = { features = ["ci", "dev"], solve-group = "default" }
+quality-extended = { features = ["quality-extended"], solve-group = "default" }
+quality-ci = { features = ["quality-ci"], solve-group = "default" }
+py310 = { features = ["py310", "dev"], solve-group = "py310" }
+py311 = { features = ["py311", "dev"], solve-group = "py311" }
+py312 = { features = ["py312", "dev"], solve-group = "py312" }
+
+[tool.pixi.tasks]
+test = "pytest tests/"
+test-unit = "pytest tests/unit/"
+lint = "ruff check python/rust_accelerators tests"
+lint-fix = "ruff check --fix python/rust_accelerators tests"
+format = "ruff format python/rust_accelerators tests"
+format-check = "ruff format --check python/rust_accelerators tests"
+typecheck = "mypy python/rust_accelerators"
+quality = { depends-on = ["lint", "format-check"] }
+check = { depends-on = ["quality", "test"] }
+security = "bandit -c pyproject.toml -r python/rust_accelerators/"
+type-check = "mypy python/rust_accelerators"
+rust-build = "maturin develop --release"
+rust-build-debug = "maturin develop"
+rust-test = { depends-on = ["rust-build", "test"] }
+rust-bench = "pytest tests/benchmarks/ --benchmark-enable"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "B", "UP", "N", "SIM"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+markers = [
+    "unit: marks tests as unit tests",
+    "integration: marks tests as integration tests",
+    "benchmark: marks tests as benchmark tests",
+    "asyncio: marks tests as asyncio tests",
+]
+log_cli = true
+log_cli_level = "DEBUG"
+timeout = 300
+timeout_method = "thread"
+addopts = "--strict-markers --strict-config"
+minversion = "7.0"
+
+[tool.coverage.run]
+branch = true
+source_pkgs = ["rust_accelerators"]
+
+[tool.coverage.report]
+fail_under = 0
+show_missing = true
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = ["B101"]
