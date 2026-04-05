@@ -14,7 +14,6 @@ try:
         calculate_profit_factor as _rs_calculate_profit_factor,
         calculate_sharpe_ratio as _rs_calculate_sharpe_ratio,
     )
-
     _ACCELERATED = True
 except ImportError:
     _ACCELERATED = False
