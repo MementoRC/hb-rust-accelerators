@@ -24,6 +24,8 @@ jobs:
           pixi-version: v0.39.5
       - name: Install dependencies
         run: pixi install
+      - name: Install package (pure Python, no Rust)
+        run: pixi run uv pip install -e . --no-build-isolation --no-deps
       - name: Lint
         run: pixi run lint
       - name: Format check
@@ -41,7 +43,7 @@ jobs:
           pixi-version: v0.39.5
       - name: Install dependencies
         run: pixi install
-      - name: Build Rust extension
+      - name: Build and install Rust extension
         run: pixi run rust-build
       - name: Test with Rust acceleration
         run: pixi run test

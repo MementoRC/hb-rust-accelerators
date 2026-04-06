@@ -10,8 +10,14 @@ import numpy as np
 try:
     from rust_accelerators._core import (
         calculate_all_metrics as _rs_calculate_all_metrics,
+    )
+    from rust_accelerators._core import (
         calculate_max_drawdown as _rs_calculate_max_drawdown,
+    )
+    from rust_accelerators._core import (
         calculate_profit_factor as _rs_calculate_profit_factor,
+    )
+    from rust_accelerators._core import (
         calculate_sharpe_ratio as _rs_calculate_sharpe_ratio,
     )
 
