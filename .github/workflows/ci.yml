@@ -10,6 +10,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  pull-requests: write
+  actions: read
+  checks: write
+
 jobs:
   lint-and-test:
     name: "Lint & Test (Python only)"
@@ -18,8 +24,8 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: prefix-dev/setup-pixi@v0.8.1
+      - uses: actions/checkout@v6
+      - uses: prefix-dev/setup-pixi@v0.9.5
         with:
           pixi-version: v0.39.5
       - name: Install dependencies
@@ -37,8 +43,8 @@ jobs:
     name: "Rust Build & Test"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: prefix-dev/setup-pixi@v0.8.1
+      - uses: actions/checkout@v6
+      - uses: prefix-dev/setup-pixi@v0.9.5
         with:
           pixi-version: v0.39.5
       - name: Install dependencies
