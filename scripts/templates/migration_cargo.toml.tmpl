@@ -1,0 +1,17 @@
+[package]
+name = "hb-rust-{module_name}"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+
+[lib]
+name = "{module_name}"
+path = "src/lib.rs"
+# rlib only — this crate is compiled into the root cdylib via maturin,
+# not built as a standalone extension module.
+crate-type = ["rlib"]
+
+[dependencies]
+# No extension-module feature — this workspace member is compiled as rlib
+# into the root _core cdylib. Only the root crate needs extension-module.
+pyo3 = "0.28"
