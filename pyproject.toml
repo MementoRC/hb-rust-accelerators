@@ -99,10 +99,10 @@ rust-build = "maturin develop --uv --release"
 rust-build-debug = "maturin develop --uv"
 rust-test = { depends-on = ["rust-build", "test"] }
 rust-bench = "pytest tests/benchmarks/ --benchmark-enable"
-scaffold-migration = "python scripts/scaffold_migration.py"
-test-migration = "python scripts/test_migration.py"
-integrate-module = "python scripts/integrate_module.py"
-list-migrations = "python scripts/list_migrations.py"
+scaffold-migration = "python -m scripts.scaffold_migration"
+test-migration = "python -m scripts.test_migration"
+integrate-module = "python -m scripts.integrate_module"
+list-migrations = "python -m scripts.list_migrations"
 
 [tool.ruff]
 target-version = "py310"
