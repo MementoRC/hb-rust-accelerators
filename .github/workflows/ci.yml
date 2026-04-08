@@ -1,3 +1,4 @@
+# CI workflow using ci-framework reusable workflows
 name: CI
 
 on:
