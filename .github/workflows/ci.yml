@@ -1,3 +1,4 @@
+# CI workflow using ci-framework reusable workflows
 name: CI
 
 on:
@@ -10,40 +11,31 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-  pull-requests: write
-  actions: read
-  checks: write
-
 jobs:
-  lint-and-test:
-    name: "Lint & Test (Python only)"
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.10", "3.11", "3.12"]
-    steps:
-      - uses: actions/checkout@v6
-      - uses: prefix-dev/setup-pixi@v0.9.5
-        with:
-          pixi-version: v0.39.5
-      - name: Install dependencies
-        run: pixi install
-      - name: Install package (pure Python, no Rust)
-        run: pixi run uv pip install -e . --no-build-isolation --no-deps
-      - name: Lint
-        run: pixi run lint
-      - name: Format check
-        run: pixi run format-check
-      - name: Test (pure Python fallback)
-        run: pixi run test
+  checks:
+    uses: Claire-s-Monster/ci-framework/.github/workflows/reusable-ci.yml@v2.6.0
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
+      actions: read
+      checks: write
+    with:
+      pixi-environment: "ci"
+      python-versions: '["3.10", "3.11", "3.12"]'
+      os-matrix: '["ubuntu-latest"]'
+      enable-performance: false
+      enable-hygiene-check: true
+      editable-install: true
+      package-path: "."
+      allowed-licenses: "MIT, Apache-2.0, BSD-3-Clause, BSD-2-Clause, ISC"
+    secrets: inherit
 
   rust-build:
     name: "Rust Build & Test"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
       - uses: prefix-dev/setup-pixi@v0.9.5
         with:
           pixi-version: v0.39.5
@@ -69,12 +61,12 @@ jobs:
   ci-success:
     name: "CI Success"
     runs-on: ubuntu-latest
-    needs: [lint-and-test, rust-build]
+    needs: [checks, rust-build]
     if: always()
     steps:
       - name: Check CI status
         run: |
-          if [ "${{ needs.lint-and-test.result }}" != "success" ] || [ "${{ needs.rust-build.result }}" != "success" ]; then
+          if [ "${{ needs.checks.result }}" != "success" ] || [ "${{ needs.rust-build.result }}" != "success" ]; then
             echo "CI failed"
             exit 1
           fi

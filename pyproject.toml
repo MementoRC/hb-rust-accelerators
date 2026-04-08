@@ -27,6 +27,7 @@ numpy = ">=1.20.0"
 rust = ">=1.75"
 maturin = ">=1.0"
 uv = "*"
+tomli = "*"
 
 [tool.pixi.feature.dev.dependencies]
 pytest = ">=8.0"
@@ -44,6 +45,7 @@ mypy = ">=1.5.1"
 pytest = ">=8.0"
 pytest-cov = ">=4.1.0"
 pytest-timeout = "*"
+pytest-benchmark = ">=4.0"
 pre-commit = ">=2.15.0"
 bandit = ">=1.8.0"
 types-setuptools = "*"
@@ -97,6 +99,10 @@ rust-build = "maturin develop --uv --release"
 rust-build-debug = "maturin develop --uv"
 rust-test = { depends-on = ["rust-build", "test"] }
 rust-bench = "pytest tests/benchmarks/ --benchmark-enable"
+scaffold-migration = "python scripts/scaffold_migration.py"
+test-migration = "python scripts/test_migration.py"
+integrate-module = "python scripts/integrate_module.py"
+list-migrations = "python scripts/list_migrations.py"
 
 [tool.ruff]
 target-version = "py310"
@@ -121,8 +127,9 @@ log_cli = true
 log_cli_level = "DEBUG"
 timeout = 300
 timeout_method = "thread"
-addopts = "--strict-markers --strict-config"
+addopts = "--strict-markers --strict-config --benchmark-disable"
 minversion = "7.0"
+pythonpath = ["."]
 
 [tool.coverage.run]
 branch = true
@@ -139,3 +146,14 @@ ignore_missing_imports = true
 [tool.bandit]
 exclude_dirs = ["tests"]
 skips = ["B101"]
+
+# Hummingbot sub-package supersession metadata.
+# Declares which hummingbot module this sub-package replaces, enabling automated
+# compatibility checking and test-skipping in hummingbot CI when this package is installed.
+[tool.hummingbot.supersedes]
+test_paths = []
+exchanges = []
+
+[tool.hummingbot.migration]
+source_checkout = "../../../"
+issue_repo = "MementoRC/hummingbot"
