@@ -4,11 +4,14 @@
 from __future__ import annotations
 
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 from scripts.migration_config import PROJECT_ROOT, read_status, write_status
+
+_PIXI = shutil.which("pixi") or "/home/memento/.conda/envs/ClaudeCode/bin/pixi"
 
 # Markers for wire/unwire
 WIRE_START = "// --- MIGRATION WIRE START: {module} ---"
@@ -113,7 +116,7 @@ def run_test_migration(module_name: str, project_root: Path | None = None) -> in
         # Build with maturin
         try:
             build_result = subprocess.run(
-                ["pixi", "run", "rust-build-debug"],
+                [_PIXI, "run", "rust-build-debug"],
                 cwd=project_root,
                 capture_output=True,
                 text=True,
@@ -129,7 +132,7 @@ def run_test_migration(module_name: str, project_root: Path | None = None) -> in
 
         # Test
         test_result = subprocess.run(
-            ["pixi", "run", "python", "-m", "pytest", f"migrations/{module_name}/tests/", "-v"],
+            [_PIXI, "run", "python", "-m", "pytest", f"migrations/{module_name}/tests/", "-v", "--tb=short"],
             cwd=project_root,
             capture_output=True,
             text=True,

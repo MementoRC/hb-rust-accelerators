@@ -169,11 +169,18 @@ fn calculate_all_metrics(
 }
 
 /// Rust-accelerated performance metrics for hummingbot.
+mod order_expiration_entry;
+
 #[pymodule]
 fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(calculate_max_drawdown, m)?)?;
     m.add_function(wrap_pyfunction!(calculate_sharpe_ratio, m)?)?;
     m.add_function(wrap_pyfunction!(calculate_profit_factor, m)?)?;
     m.add_function(wrap_pyfunction!(calculate_all_metrics, m)?)?;
+
+    let order_expiration_entry_module = PyModule::new(m.py(), "order_expiration_entry")?;
+    order_expiration_entry::register(order_expiration_entry_module.as_borrowed())?;
+    m.add_submodule(&order_expiration_entry_module)?;
+
     Ok(())
 }

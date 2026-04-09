@@ -14,8 +14,8 @@ from __future__ import annotations
 
 import pytest
 
-# Import the fallback unconditionally so tests run without the Rust build.
-from migrations.order_expiration_entry.python.order_expiration_entry import (
+# Import from the permanent package location.
+from rust_accelerators.order_expiration_entry import (
     OrderExpirationEntry,
     is_accelerated,
 )
@@ -237,11 +237,8 @@ class TestEqualityAndHash:
 
 
 class TestToPandas:
-    pytest.importorskip("pandas", reason="pandas not installed")
-
     def test_to_pandas_columns(self) -> None:
-        import pandas as pd
-
+        pd = pytest.importorskip("pandas", reason="pandas not installed")
         entries = [
             OrderExpirationEntry("BTC-USDT", "ord-1", 1000.0, 2000.0),
             OrderExpirationEntry("ETH-USDT", "ord-2", 1001.0, 2001.0),
@@ -251,6 +248,7 @@ class TestToPandas:
         assert list(df.columns) == ["trading_pair", "order_id", "timestamp", "expiration_timestamp"]
 
     def test_to_pandas_row_count(self) -> None:
+        pytest.importorskip("pandas", reason="pandas not installed")
         entries = [
             OrderExpirationEntry("BTC-USDT", f"ord-{i}", float(i), float(i + 100))
             for i in range(5)
@@ -259,6 +257,7 @@ class TestToPandas:
         assert len(df) == 5
 
     def test_to_pandas_values(self) -> None:
+        pytest.importorskip("pandas", reason="pandas not installed")
         entries = [OrderExpirationEntry("BTC-USDT", "ord-1", 1000.0, 2000.0)]
         df = OrderExpirationEntry.to_pandas(entries)
         row = df.iloc[0]
@@ -268,12 +267,14 @@ class TestToPandas:
         assert row["expiration_timestamp"] == pytest.approx(2000.0)
 
     def test_to_pandas_empty_list(self) -> None:
+        pytest.importorskip("pandas", reason="pandas not installed")
         df = OrderExpirationEntry.to_pandas([])
         assert len(df) == 0
         assert list(df.columns) == ["trading_pair", "order_id", "timestamp", "expiration_timestamp"]
 
     def test_to_pandas_no_expiration_or_expiration_time_column(self) -> None:
         """Verify the original Cython bug is fixed — no ghost columns."""
+        pytest.importorskip("pandas", reason="pandas not installed")
         entries = [OrderExpirationEntry("BTC-USDT", "ord-1", 1.0, 2.0)]
         df = OrderExpirationEntry.to_pandas(entries)
         assert "expiration" not in df.columns

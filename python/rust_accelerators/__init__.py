@@ -17,3 +17,5 @@ __all__ = [
     "calculate_sharpe_ratio",
     "is_accelerated",
 ]
+
+from rust_accelerators import order_expiration_entry  # noqa: F401

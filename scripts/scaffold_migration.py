@@ -55,6 +55,14 @@ def scaffold_workspace(
     (ws / "python").mkdir()
     (ws / "tests").mkdir()
 
+    # Create __init__.py files so the workspace is importable as a package
+    # (required for test imports like: from migrations.<name>.python.<name> import ...)
+    if not (project_root / "migrations" / "__init__.py").exists():
+        (project_root / "migrations" / "__init__.py").write_text("# Migration workspaces package namespace.\n")
+    (ws / "__init__.py").write_text(f"# {module_name} migration workspace.\n")
+    (ws / "python" / "__init__.py").write_text(f"# Python wrappers for {module_name} migration.\n")
+    (ws / "tests" / "__init__.py").write_text(f"# Tests for {module_name} migration.\n")
+
     class_name = "".join(part.capitalize() for part in module_name.split("_"))
 
     cargo_tmpl = _read_template("migration_cargo.toml.tmpl")

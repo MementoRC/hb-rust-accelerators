@@ -13,4 +13,4 @@ pyo3 = { version = "0.28", features = ["extension-module"] }
 numpy = "0.28"
 
 [workspace]
-members = [".", "migrations/order_expiration_entry"]
+members = ["."]
