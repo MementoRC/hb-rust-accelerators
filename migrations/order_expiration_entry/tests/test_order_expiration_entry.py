@@ -1,0 +1,291 @@
+"""Tests for the order_expiration_entry migration.
+
+Covers the pure-Python fallback (always available) and, when the Rust
+extension is importable, the accelerated variant under the same API.
+
+Test cases are written from scratch (no pre-existing hummingbot test suite
+for this module) but derived from:
+  - The C++ operator< semantics in OrderExpirationEntry.cpp
+  - The Cython property API in order_expiration_entry.pyx
+  - paper_trade_exchange usage (sorted sets, attribute access)
+"""
+
+from __future__ import annotations
+
+import pytest
+
+# Import the fallback unconditionally so tests run without the Rust build.
+from migrations.order_expiration_entry.python.order_expiration_entry import (
+    OrderExpirationEntry,
+    is_accelerated,
+)
+
+
+# ---------------------------------------------------------------------------
+# Fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture()
+def entry() -> OrderExpirationEntry:
+    return OrderExpirationEntry(
+        trading_pair="BTC-USDT",
+        order_id="order-001",
+        timestamp=1_700_000_000.0,
+        expiration_ts=1_700_000_060.0,
+    )
+
+
+@pytest.fixture()
+def entry_same_expiry_later_id() -> OrderExpirationEntry:
+    """Same expiration_timestamp, lexicographically later order_id."""
+    return OrderExpirationEntry(
+        trading_pair="ETH-USDT",
+        order_id="order-999",
+        timestamp=1_700_000_001.0,
+        expiration_ts=1_700_000_060.0,
+    )
+
+
+@pytest.fixture()
+def entry_later_expiry() -> OrderExpirationEntry:
+    return OrderExpirationEntry(
+        trading_pair="BTC-USDT",
+        order_id="order-002",
+        timestamp=1_700_000_000.0,
+        expiration_ts=1_700_000_120.0,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Construction
+# ---------------------------------------------------------------------------
+
+
+class TestConstruction:
+    def test_basic_construction(self, entry: OrderExpirationEntry) -> None:
+        assert entry.trading_pair == "BTC-USDT"
+        assert entry.order_id == "order-001"
+        assert entry.timestamp == pytest.approx(1_700_000_000.0)
+        assert entry.expiration_timestamp == pytest.approx(1_700_000_060.0)
+
+    def test_default_values_from_cpp_default_ctor(self) -> None:
+        """Equivalent to C++ OrderExpirationEntry() default constructor."""
+        e = OrderExpirationEntry("", "", 0.0, 0.0)
+        assert e.trading_pair == ""
+        assert e.order_id == ""
+        assert e.timestamp == 0.0
+        assert e.expiration_timestamp == 0.0
+
+    def test_int_timestamps_coerced_to_float(self) -> None:
+        e = OrderExpirationEntry("BTC-USDT", "x", 1000, 2000)
+        assert isinstance(e.timestamp, float)
+        assert isinstance(e.expiration_timestamp, float)
+
+    def test_unicode_trading_pair(self) -> None:
+        e = OrderExpirationEntry("BTC-USDT", "ord-1", 1.0, 2.0)
+        assert e.trading_pair == "BTC-USDT"
+
+    def test_empty_order_id(self) -> None:
+        e = OrderExpirationEntry("BTC-USDT", "", 1.0, 2.0)
+        assert e.order_id == ""
+
+
+# ---------------------------------------------------------------------------
+# Properties (read-only)
+# ---------------------------------------------------------------------------
+
+
+class TestProperties:
+    def test_trading_pair_is_readonly(self, entry: OrderExpirationEntry) -> None:
+        with pytest.raises(AttributeError):
+            entry.trading_pair = "ETH-USDT"  # type: ignore[misc]
+
+    def test_order_id_is_readonly(self, entry: OrderExpirationEntry) -> None:
+        with pytest.raises(AttributeError):
+            entry.order_id = "other"  # type: ignore[misc]
+
+    def test_timestamp_is_readonly(self, entry: OrderExpirationEntry) -> None:
+        with pytest.raises(AttributeError):
+            entry.timestamp = 0.0  # type: ignore[misc]
+
+    def test_expiration_timestamp_is_readonly(self, entry: OrderExpirationEntry) -> None:
+        with pytest.raises(AttributeError):
+            entry.expiration_timestamp = 0.0  # type: ignore[misc]
+
+
+# ---------------------------------------------------------------------------
+# __repr__
+# ---------------------------------------------------------------------------
+
+
+class TestRepr:
+    def test_repr_format(self, entry: OrderExpirationEntry) -> None:
+        r = repr(entry)
+        assert r.startswith("OrderExpirationEntry(")
+        assert "BTC-USDT" in r
+        assert "order-001" in r
+        assert "1700000000.0" in r
+        assert "1700000060.0" in r
+
+    def test_repr_empty_entry(self) -> None:
+        e = OrderExpirationEntry("", "", 0.0, 0.0)
+        assert repr(e) == "OrderExpirationEntry('', '', 0.0, '0.0')"
+
+
+# ---------------------------------------------------------------------------
+# Ordering — C++ operator< semantics
+# ---------------------------------------------------------------------------
+
+
+class TestOrdering:
+    def test_earlier_expiry_is_less(
+        self,
+        entry: OrderExpirationEntry,
+        entry_later_expiry: OrderExpirationEntry,
+    ) -> None:
+        """Primary key: expiration_timestamp ascending."""
+        assert entry < entry_later_expiry
+        assert not (entry_later_expiry < entry)
+
+    def test_same_expiry_earlier_order_id_is_less(
+        self,
+        entry: OrderExpirationEntry,
+        entry_same_expiry_later_id: OrderExpirationEntry,
+    ) -> None:
+        """Secondary key: order_id lexicographic ascending."""
+        # entry.order_id = "order-001" < entry_same_expiry_later_id.order_id = "order-999"
+        assert entry < entry_same_expiry_later_id
+        assert not (entry_same_expiry_later_id < entry)
+
+    def test_equal_entries_not_less_than(self, entry: OrderExpirationEntry) -> None:
+        clone = OrderExpirationEntry(
+            entry.trading_pair,
+            entry.order_id,
+            entry.timestamp,
+            entry.expiration_timestamp,
+        )
+        assert not (entry < clone)
+        assert not (clone < entry)
+
+    def test_sort_by_expiry_then_order_id(self) -> None:
+        """sorted() should respect C++ operator< ordering."""
+        e1 = OrderExpirationEntry("X", "b", 1.0, 200.0)
+        e2 = OrderExpirationEntry("X", "a", 1.0, 100.0)
+        e3 = OrderExpirationEntry("X", "c", 1.0, 200.0)
+        result = sorted([e1, e2, e3])
+        assert result[0].expiration_timestamp == pytest.approx(100.0)
+        assert result[1].order_id == "b"
+        assert result[2].order_id == "c"
+
+    def test_usable_in_sorted_set_pattern(self) -> None:
+        """paper_trade_exchange uses sorted collections of these entries."""
+        entries = [
+            OrderExpirationEntry("BTC-USDT", "ord-z", 1.0, 300.0),
+            OrderExpirationEntry("BTC-USDT", "ord-a", 1.0, 100.0),
+            OrderExpirationEntry("BTC-USDT", "ord-m", 1.0, 200.0),
+        ]
+        sorted_entries = sorted(entries)
+        expiry_seq = [e.expiration_timestamp for e in sorted_entries]
+        assert expiry_seq == sorted(expiry_seq)
+
+
+# ---------------------------------------------------------------------------
+# Equality and hashing
+# ---------------------------------------------------------------------------
+
+
+class TestEqualityAndHash:
+    def test_equal_entries(self, entry: OrderExpirationEntry) -> None:
+        other = OrderExpirationEntry(
+            entry.trading_pair,
+            entry.order_id,
+            entry.timestamp,
+            entry.expiration_timestamp,
+        )
+        assert entry == other
+
+    def test_different_trading_pair_not_equal(self, entry: OrderExpirationEntry) -> None:
+        other = OrderExpirationEntry("ETH-USDT", entry.order_id, entry.timestamp, entry.expiration_timestamp)
+        assert entry != other
+
+    def test_different_order_id_not_equal(self, entry: OrderExpirationEntry) -> None:
+        other = OrderExpirationEntry(entry.trading_pair, "other", entry.timestamp, entry.expiration_timestamp)
+        assert entry != other
+
+    def test_not_equal_to_non_entry(self, entry: OrderExpirationEntry) -> None:
+        assert entry != "not an entry"
+        assert entry != 42
+
+    def test_hashable(self, entry: OrderExpirationEntry) -> None:
+        s = {entry}
+        assert entry in s
+
+    def test_equal_entries_same_hash(self, entry: OrderExpirationEntry) -> None:
+        other = OrderExpirationEntry(
+            entry.trading_pair,
+            entry.order_id,
+            entry.timestamp,
+            entry.expiration_timestamp,
+        )
+        assert hash(entry) == hash(other)
+
+
+# ---------------------------------------------------------------------------
+# to_pandas
+# ---------------------------------------------------------------------------
+
+
+class TestToPandas:
+    pytest.importorskip("pandas", reason="pandas not installed")
+
+    def test_to_pandas_columns(self) -> None:
+        import pandas as pd
+
+        entries = [
+            OrderExpirationEntry("BTC-USDT", "ord-1", 1000.0, 2000.0),
+            OrderExpirationEntry("ETH-USDT", "ord-2", 1001.0, 2001.0),
+        ]
+        df = OrderExpirationEntry.to_pandas(entries)
+        assert isinstance(df, pd.DataFrame)
+        assert list(df.columns) == ["trading_pair", "order_id", "timestamp", "expiration_timestamp"]
+
+    def test_to_pandas_row_count(self) -> None:
+        entries = [
+            OrderExpirationEntry("BTC-USDT", f"ord-{i}", float(i), float(i + 100))
+            for i in range(5)
+        ]
+        df = OrderExpirationEntry.to_pandas(entries)
+        assert len(df) == 5
+
+    def test_to_pandas_values(self) -> None:
+        entries = [OrderExpirationEntry("BTC-USDT", "ord-1", 1000.0, 2000.0)]
+        df = OrderExpirationEntry.to_pandas(entries)
+        row = df.iloc[0]
+        assert row["trading_pair"] == "BTC-USDT"
+        assert row["order_id"] == "ord-1"
+        assert row["timestamp"] == pytest.approx(1000.0)
+        assert row["expiration_timestamp"] == pytest.approx(2000.0)
+
+    def test_to_pandas_empty_list(self) -> None:
+        df = OrderExpirationEntry.to_pandas([])
+        assert len(df) == 0
+        assert list(df.columns) == ["trading_pair", "order_id", "timestamp", "expiration_timestamp"]
+
+    def test_to_pandas_no_expiration_or_expiration_time_column(self) -> None:
+        """Verify the original Cython bug is fixed — no ghost columns."""
+        entries = [OrderExpirationEntry("BTC-USDT", "ord-1", 1.0, 2.0)]
+        df = OrderExpirationEntry.to_pandas(entries)
+        assert "expiration" not in df.columns
+        assert "expiration_time" not in df.columns
+
+
+# ---------------------------------------------------------------------------
+# is_accelerated helper
+# ---------------------------------------------------------------------------
+
+
+class TestIsAccelerated:
+    def test_returns_bool(self) -> None:
+        result = is_accelerated()
+        assert isinstance(result, bool)

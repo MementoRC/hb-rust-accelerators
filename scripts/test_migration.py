@@ -23,7 +23,10 @@ def wire_module(project_root: Path, module_name: str, module_src: Path) -> None:
     text = lib_rs.read_text()
 
     # Add mod declaration with path attribute (before #[pymodule])
-    rel_path = module_src.relative_to(project_root)
+    # #[path] resolves relative to the file containing the directive (src/lib.rs),
+    # so compute a relative path from lib_rs.parent to module_src using os.path.relpath.
+    import os
+    rel_path = os.path.relpath(module_src, lib_rs.parent)
     mod_decl = (
         f'{WIRE_START.format(module=module_name)}\n'
         f'#[path = "{rel_path}"]\n'
