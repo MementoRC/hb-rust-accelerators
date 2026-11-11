@@ -1,5 +1,5 @@
 use numpy::ndarray::ArrayView1;
-use numpy::{PyArray1, PyReadonlyArray1};
+use numpy::PyReadonlyArray1;
 use pyo3::prelude::*;
 
 /// Calculate max drawdown and max drawdown percentage from cumulative P&L series.
@@ -38,7 +38,10 @@ fn calculate_max_drawdown(pnl_series: PyReadonlyArray1<f64>) -> PyResult<(f64, f
 /// Uses Welford's online algorithm for numerical stability.
 #[pyfunction]
 #[pyo3(signature = (returns, periods_per_year=252))]
-fn calculate_sharpe_ratio(returns: PyReadonlyArray1<f64>, periods_per_year: usize) -> PyResult<f64> {
+fn calculate_sharpe_ratio(
+    returns: PyReadonlyArray1<f64>,
+    periods_per_year: usize,
+) -> PyResult<f64> {
     let data: ArrayView1<f64> = returns.as_array();
     let n = data.len();
     if n < 2 {

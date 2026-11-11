@@ -13,7 +13,10 @@ use pyo3::Borrowed;
 /// Ordering (C++ operator<) is preserved as __lt__:
 ///   primary key:   expiration_timestamp ascending
 ///   secondary key: order_id ascending (lexicographic)
-#[pyclass(module = "rust_accelerators._core.order_expiration_entry", from_py_object)]
+#[pyclass(
+    module = "rust_accelerators._core.order_expiration_entry",
+    from_py_object
+)]
 #[derive(Clone, Debug)]
 pub struct OrderExpirationEntry {
     trading_pair: String,
@@ -32,12 +35,7 @@ impl OrderExpirationEntry {
     ///     timestamp:     Order creation timestamp (Unix seconds)
     ///     expiration_ts: Order expiration timestamp (Unix seconds)
     #[new]
-    pub fn new(
-        trading_pair: String,
-        order_id: String,
-        timestamp: f64,
-        expiration_ts: f64,
-    ) -> Self {
+    pub fn new(trading_pair: String, order_id: String, timestamp: f64, expiration_ts: f64) -> Self {
         OrderExpirationEntry {
             trading_pair,
             order_id,
@@ -108,7 +106,12 @@ impl OrderExpirationEntry {
 
         let columns = PyList::new(
             py,
-            ["trading_pair", "order_id", "timestamp", "expiration_timestamp"],
+            [
+                "trading_pair",
+                "order_id",
+                "timestamp",
+                "expiration_timestamp",
+            ],
         )?;
 
         let data = PyList::empty(py);
