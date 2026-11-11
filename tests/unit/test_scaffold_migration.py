@@ -9,6 +9,21 @@ import pytest
 from scripts.scaffold_migration import scaffold_workspace
 
 
+class TestModuleNameValidation:
+    @pytest.mark.parametrize("name", ["order_book", "pubsub2"])
+    def test_valid_names_accepted(self, tmp_path, name):
+        ws = scaffold_workspace(name, f"hummingbot.core.{name}", 1, [], 3, project_root=tmp_path)
+        assert ws == tmp_path / "migrations" / name
+
+    @pytest.mark.parametrize(
+        "name", ["--check-compile", "_cleanup_junk", "Order", "1abc", "a-b", "class", ""]
+    )
+    def test_invalid_names_rejected(self, tmp_path, name):
+        with pytest.raises(ValueError, match="Invalid module name"):
+            scaffold_workspace(name, "hummingbot.core.x", 1, [], 3, project_root=tmp_path)
+        assert not (tmp_path / "migrations").exists()
+
+
 class TestScaffoldWorkspace:
     def test_creates_directory_structure(self, tmp_path):
         scaffold_workspace(
