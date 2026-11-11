@@ -20,7 +20,6 @@ from rust_accelerators.order_expiration_entry import (
     is_accelerated,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -206,11 +205,15 @@ class TestEqualityAndHash:
         assert entry == other
 
     def test_different_trading_pair_not_equal(self, entry: OrderExpirationEntry) -> None:
-        other = OrderExpirationEntry("ETH-USDT", entry.order_id, entry.timestamp, entry.expiration_timestamp)
+        other = OrderExpirationEntry(
+            "ETH-USDT", entry.order_id, entry.timestamp, entry.expiration_timestamp
+        )
         assert entry != other
 
     def test_different_order_id_not_equal(self, entry: OrderExpirationEntry) -> None:
-        other = OrderExpirationEntry(entry.trading_pair, "other", entry.timestamp, entry.expiration_timestamp)
+        other = OrderExpirationEntry(
+            entry.trading_pair, "other", entry.timestamp, entry.expiration_timestamp
+        )
         assert entry != other
 
     def test_not_equal_to_non_entry(self, entry: OrderExpirationEntry) -> None:
@@ -250,8 +253,7 @@ class TestToPandas:
     def test_to_pandas_row_count(self) -> None:
         pytest.importorskip("pandas", reason="pandas not installed")
         entries = [
-            OrderExpirationEntry("BTC-USDT", f"ord-{i}", float(i), float(i + 100))
-            for i in range(5)
+            OrderExpirationEntry("BTC-USDT", f"ord-{i}", float(i), float(i + 100)) for i in range(5)
         ]
         df = OrderExpirationEntry.to_pandas(entries)
         assert len(df) == 5
