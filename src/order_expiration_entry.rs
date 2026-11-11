@@ -10,7 +10,7 @@ use pyo3::Borrowed;
 ///   double      timestamp          → f64
 ///   double      expiration_timestamp → f64
 ///
-/// Ordering (C++ operator<) is preserved as __lt__:
+/// Ordering (C++ operator<) is preserved as __lt__ (with __le__/__gt__/__ge__ on the same key):
 ///   primary key:   expiration_timestamp ascending
 ///   secondary key: order_id ascending (lexicographic)
 #[pyclass(
@@ -86,6 +86,33 @@ impl OrderExpirationEntry {
             self.order_id < other.order_id
         } else {
             self.expiration_timestamp < other.expiration_timestamp
+        }
+    }
+
+    /// Rich comparison: less-than-or-equal (same key as `__lt__`).
+    pub fn __le__(&self, other: &OrderExpirationEntry) -> bool {
+        if self.expiration_timestamp == other.expiration_timestamp {
+            self.order_id <= other.order_id
+        } else {
+            self.expiration_timestamp <= other.expiration_timestamp
+        }
+    }
+
+    /// Rich comparison: greater-than (same key as `__lt__`).
+    pub fn __gt__(&self, other: &OrderExpirationEntry) -> bool {
+        if self.expiration_timestamp == other.expiration_timestamp {
+            self.order_id > other.order_id
+        } else {
+            self.expiration_timestamp > other.expiration_timestamp
+        }
+    }
+
+    /// Rich comparison: greater-than-or-equal (same key as `__lt__`).
+    pub fn __ge__(&self, other: &OrderExpirationEntry) -> bool {
+        if self.expiration_timestamp == other.expiration_timestamp {
+            self.order_id >= other.order_id
+        } else {
+            self.expiration_timestamp >= other.expiration_timestamp
         }
     }
 

@@ -145,7 +145,7 @@ class TestOrdering:
     ) -> None:
         """Primary key: expiration_timestamp ascending."""
         assert entry < entry_later_expiry
-        assert not (entry_later_expiry < entry)
+        assert sorted([entry_later_expiry, entry]) == [entry, entry_later_expiry]
 
     def test_same_expiry_earlier_order_id_is_less(
         self,
@@ -155,7 +155,10 @@ class TestOrdering:
         """Secondary key: order_id lexicographic ascending."""
         # entry.order_id = "order-001" < entry_same_expiry_later_id.order_id = "order-999"
         assert entry < entry_same_expiry_later_id
-        assert not (entry_same_expiry_later_id < entry)
+        assert sorted([entry_same_expiry_later_id, entry]) == [
+            entry,
+            entry_same_expiry_later_id,
+        ]
 
     def test_equal_entries_not_less_than(self, entry: OrderExpirationEntry) -> None:
         clone = OrderExpirationEntry(
@@ -166,6 +169,45 @@ class TestOrdering:
         )
         assert not (entry < clone)
         assert not (clone < entry)
+
+    def test_le_gt_ge_earlier_vs_later_expiry(
+        self,
+        entry: OrderExpirationEntry,
+        entry_later_expiry: OrderExpirationEntry,
+    ) -> None:
+        assert entry <= entry_later_expiry
+        assert entry_later_expiry > entry
+        assert entry_later_expiry >= entry
+        assert max(entry, entry_later_expiry) is entry_later_expiry
+
+    def test_le_gt_ge_same_expiry_different_id(
+        self,
+        entry: OrderExpirationEntry,
+        entry_same_expiry_later_id: OrderExpirationEntry,
+    ) -> None:
+        assert entry <= entry_same_expiry_later_id
+        assert entry_same_expiry_later_id > entry
+        assert entry_same_expiry_later_id >= entry
+        assert max(entry, entry_same_expiry_later_id) is entry_same_expiry_later_id
+
+    def test_le_ge_equal_entries(self, entry: OrderExpirationEntry) -> None:
+        clone = OrderExpirationEntry(
+            entry.trading_pair,
+            entry.order_id,
+            entry.timestamp,
+            entry.expiration_timestamp,
+        )
+        assert entry <= clone
+        assert entry >= clone
+        assert (entry > clone) is False
+
+    def test_ordering_non_entry_unsupported(self, entry: OrderExpirationEntry) -> None:
+        with pytest.raises(TypeError):
+            entry <= 42  # type: ignore[operator]  # noqa: B015
+        with pytest.raises(TypeError):
+            entry > 42  # type: ignore[operator]  # noqa: B015
+        with pytest.raises(TypeError):
+            entry >= 42  # type: ignore[operator]  # noqa: B015
 
     def test_sort_by_expiry_then_order_id(self) -> None:
         """sorted() should respect C++ operator< ordering."""

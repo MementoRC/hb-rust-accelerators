@@ -13,6 +13,9 @@ Public API (mirrors original Cython class):
     .expiration_timestamp -> float
     .__repr__()         -> str
     .__lt__(other)      -> bool   (sort by expiration_timestamp, then order_id)
+    .__le__(other)      -> bool   (same key as __lt__)
+    .__gt__(other)      -> bool   (same key as __lt__)
+    .__ge__(other)      -> bool   (same key as __lt__)
     .to_pandas(entries) -> pd.DataFrame  (classmethod)
 """
 
@@ -74,11 +77,29 @@ except ImportError:
                 f"{self._timestamp}, '{self._expiration_timestamp}')"
             )
 
-        def __lt__(self, other: OrderExpirationEntry) -> bool:
+        def _key(self) -> tuple[float, str]:
+            return (self._expiration_timestamp, self._order_id)
+
+        def __lt__(self, other: object) -> bool:
             """C++ operator< semantics: sort by expiration_timestamp, then order_id."""
-            if self._expiration_timestamp == other._expiration_timestamp:
-                return self._order_id < other._order_id
-            return self._expiration_timestamp < other._expiration_timestamp
+            if not isinstance(other, OrderExpirationEntry):
+                return NotImplemented
+            return self._key() < other._key()
+
+        def __le__(self, other: object) -> bool:
+            if not isinstance(other, OrderExpirationEntry):
+                return NotImplemented
+            return self._key() <= other._key()
+
+        def __gt__(self, other: object) -> bool:
+            if not isinstance(other, OrderExpirationEntry):
+                return NotImplemented
+            return self._key() > other._key()
+
+        def __ge__(self, other: object) -> bool:
+            if not isinstance(other, OrderExpirationEntry):
+                return NotImplemented
+            return self._key() >= other._key()
 
         def __eq__(self, other: object) -> bool:
             if not isinstance(other, OrderExpirationEntry):
