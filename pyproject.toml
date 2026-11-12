@@ -1,5 +1,5 @@
 [build-system]
-requires = ["maturin>=1.0,<2.0"]
+requires = ["maturin>=1.13.1,<2.0"]
 build-backend = "maturin"
 
 [project]
@@ -9,7 +9,7 @@ description = "PyO3-based Rust acceleration modules for hummingbot sub-packages"
 requires-python = ">=3.10"
 license = {text = "Apache-2.0"}
 dependencies = [
-    "numpy>=1.20.0",
+    "numpy>=2.2.6",
 ]
 
 [tool.maturin]
@@ -23,9 +23,9 @@ platforms = ["linux-64", "osx-arm64", "osx-64"]
 
 [tool.pixi.dependencies]
 python = ">=3.10,<3.13"
-numpy = ">=1.20.0"
+numpy = ">=2.2.6"
 rust = ">=1.75"
-maturin = ">=1.0"
+maturin = ">=1.13.1,<2.0"
 uv = "*"
 tomli = "*"
 
@@ -60,7 +60,7 @@ security-scan = "bandit -c pyproject.toml -r python/rust_accelerators/"
 safety-check = "pip-audit"
 
 [tool.pixi.feature.quality-ci.dependencies]
-maturin = ">=1.0"
+maturin = ">=1.13.1,<2.0"
 
 [tool.pixi.feature.quality-ci.tasks]
 build = "maturin build"
