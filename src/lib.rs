@@ -1,5 +1,5 @@
 use numpy::ndarray::ArrayView1;
-use numpy::{PyArray1, PyReadonlyArray1};
+use numpy::PyReadonlyArray1;
 use pyo3::prelude::*;
 
 /// Calculate max drawdown and max drawdown percentage from cumulative P&L series.
@@ -38,7 +38,10 @@ fn calculate_max_drawdown(pnl_series: PyReadonlyArray1<f64>) -> PyResult<(f64, f
 /// Uses Welford's online algorithm for numerical stability.
 #[pyfunction]
 #[pyo3(signature = (returns, periods_per_year=252))]
-fn calculate_sharpe_ratio(returns: PyReadonlyArray1<f64>, periods_per_year: usize) -> PyResult<f64> {
+fn calculate_sharpe_ratio(
+    returns: PyReadonlyArray1<f64>,
+    periods_per_year: usize,
+) -> PyResult<f64> {
     let data: ArrayView1<f64> = returns.as_array();
     let n = data.len();
     if n < 2 {
@@ -169,11 +172,18 @@ fn calculate_all_metrics(
 }
 
 /// Rust-accelerated performance metrics for hummingbot.
+mod order_expiration_entry;
+
 #[pymodule]
 fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(calculate_max_drawdown, m)?)?;
     m.add_function(wrap_pyfunction!(calculate_sharpe_ratio, m)?)?;
     m.add_function(wrap_pyfunction!(calculate_profit_factor, m)?)?;
     m.add_function(wrap_pyfunction!(calculate_all_metrics, m)?)?;
+
+    let order_expiration_entry_module = PyModule::new(m.py(), "order_expiration_entry")?;
+    order_expiration_entry::register(order_expiration_entry_module.as_borrowed())?;
+    m.add_submodule(&order_expiration_entry_module)?;
+
     Ok(())
 }

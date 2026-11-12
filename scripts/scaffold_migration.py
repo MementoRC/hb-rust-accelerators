@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import keyword
 import re
 import sys
 from datetime import date
@@ -11,6 +12,17 @@ from scripts.migration_config import MigrationStatus, write_status
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
+_MODULE_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+
+
+def _validate_module_name(name: str) -> None:
+    """Reject names that are not valid Rust crate / Python module identifiers."""
+    if not _MODULE_NAME_RE.fullmatch(name) or keyword.iskeyword(name):
+        raise ValueError(
+            f"Invalid module name {name!r}: must match {_MODULE_NAME_RE.pattern} "
+            "(lowercase letter first, then lowercase letters, digits or '_') "
+            "and must not be a Python keyword"
+        )
 
 
 def _read_template(name: str) -> str:
@@ -44,6 +56,7 @@ def scaffold_workspace(
     project_root: Path | None = None,
 ) -> Path:
     """Create a migration workspace directory with scaffold files."""
+    _validate_module_name(module_name)
     if project_root is None:
         project_root = PROJECT_ROOT
 
@@ -54,6 +67,14 @@ def scaffold_workspace(
     (ws / "src").mkdir(parents=True)
     (ws / "python").mkdir()
     (ws / "tests").mkdir()
+
+    # Create __init__.py files so the workspace is importable as a package
+    # (required for test imports like: from migrations.<name>.python.<name> import ...)
+    if not (project_root / "migrations" / "__init__.py").exists():
+        (project_root / "migrations" / "__init__.py").write_text("# Migration workspaces package namespace.\n")
+    (ws / "__init__.py").write_text(f"# {module_name} migration workspace.\n")
+    (ws / "python" / "__init__.py").write_text(f"# Python wrappers for {module_name} migration.\n")
+    (ws / "tests" / "__init__.py").write_text(f"# Tests for {module_name} migration.\n")
 
     class_name = "".join(part.capitalize() for part in module_name.split("_"))
 
@@ -111,6 +132,11 @@ if __name__ == "__main__":
         sys.exit(1)
     name = sys.argv[1]
     path = sys.argv[2]
+    try:
+        _validate_module_name(name)
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        sys.exit(2)
     issue = int(sys.argv[3]) if len(sys.argv) > 3 else 0
     tier = int(sys.argv[4]) if len(sys.argv) > 4 else 3
     result = scaffold_workspace(name, path, issue, [], tier)

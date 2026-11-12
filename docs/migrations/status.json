@@ -1,0 +1,13 @@
+{
+  "issue_number": 21,
+  "module": "hummingbot.core.data_type.order_expiration_entry",
+  "status": "integrated",
+  "created": "2026-04-09",
+  "source_files": [
+    "hummingbot/core/cpp/OrderExpirationEntry.h",
+    "hummingbot/core/cpp/OrderExpirationEntry.cpp",
+    "hummingbot/core/data_type/order_expiration_entry.pyx",
+    "hummingbot/core/data_type/order_expiration_entry.pxd"
+  ],
+  "tier": 3
+}

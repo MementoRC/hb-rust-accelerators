@@ -151,7 +151,7 @@ skips = ["B101"]
 # Declares which hummingbot module this sub-package replaces, enabling automated
 # compatibility checking and test-skipping in hummingbot CI when this package is installed.
 [tool.hummingbot.supersedes]
-test_paths = []
+test_paths = ["tests/hummingbot/core/data_type/order_expiration_entry/pyx.py"]
 exchanges = []
 
 [tool.hummingbot.migration]

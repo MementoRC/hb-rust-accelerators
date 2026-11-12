@@ -9,6 +9,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+_PIXI = shutil.which("pixi") or "/home/memento/.conda/envs/ClaudeCode/bin/pixi"
+
 if sys.version_info >= (3, 11):
     import tomllib
 else:
@@ -33,11 +35,14 @@ def promote_files(project_root: Path, module_name: str) -> None:
         project_root / "python" / "rust_accelerators" / f"{module_name}.py",
     )
 
-    # Tests
-    shutil.copy2(
-        ws / "tests" / f"test_{module_name}.py",
-        project_root / "tests" / "unit" / f"test_{module_name}.py",
-    )
+    # Tests — rewrite migration-relative import to permanent package import
+    test_src = ws / "tests" / f"test_{module_name}.py"
+    test_text = test_src.read_text()
+    old_import = f"from migrations.{module_name}.python.{module_name} import"
+    new_import = f"from rust_accelerators.{module_name} import"
+    test_text = test_text.replace(old_import, new_import)
+    dest_test = project_root / "tests" / "unit" / f"test_{module_name}.py"
+    dest_test.write_text(test_text)
 
     # Benchmarks (if exists)
     bench_src = ws / "tests" / f"bench_{module_name}.py"
@@ -254,7 +259,7 @@ def integrate_module(module_name: str, project_root: Path | None = None) -> int:
     # Run full test suite to verify integration
     print("Running post-integration tests...")
     test_result = subprocess.run(
-        ["pixi", "run", "test"],
+        [_PIXI, "run", "test"],
         cwd=project_root,
         capture_output=True,
         text=True,
