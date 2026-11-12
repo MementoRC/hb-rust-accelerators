@@ -12,6 +12,10 @@ for this module) but derived from:
 
 from __future__ import annotations
 
+import operator
+from collections.abc import Callable
+from typing import Any
+
 import pytest
 
 # Import from the permanent package location.
@@ -137,77 +141,106 @@ class TestRepr:
 # ---------------------------------------------------------------------------
 
 
+LO_HI_CASES = [
+    (operator.lt, True),
+    (operator.le, True),
+    (operator.gt, False),
+    (operator.ge, False),
+]
+HI_LO_CASES = [
+    (operator.lt, False),
+    (operator.le, False),
+    (operator.gt, True),
+    (operator.ge, True),
+]
+EQUAL_CASES = [
+    (operator.lt, False),
+    (operator.le, True),
+    (operator.gt, False),
+    (operator.ge, True),
+]
+ALL_OPS = [operator.lt, operator.le, operator.gt, operator.ge]
+
+
+@pytest.fixture(params=["later_expiry", "same_expiry_later_id"])
+def ordered_pair(
+    request: pytest.FixtureRequest,
+    entry: OrderExpirationEntry,
+) -> tuple[OrderExpirationEntry, OrderExpirationEntry]:
+    """(lower, higher) pair. Primary key: expiration ascending; secondary: order_id."""
+    higher: OrderExpirationEntry = request.getfixturevalue(
+        {
+            "later_expiry": "entry_later_expiry",
+            "same_expiry_later_id": "entry_same_expiry_later_id",
+        }[request.param]
+    )
+    return entry, higher
+
+
+@pytest.fixture()
+def entry_clone(entry: OrderExpirationEntry) -> OrderExpirationEntry:
+    return OrderExpirationEntry(
+        entry.trading_pair,
+        entry.order_id,
+        entry.timestamp,
+        entry.expiration_timestamp,
+    )
+
+
 class TestOrdering:
-    def test_earlier_expiry_is_less(
+    @pytest.mark.parametrize(("op", "expected"), LO_HI_CASES)
+    def test_lower_vs_higher(
+        self,
+        ordered_pair: tuple[OrderExpirationEntry, OrderExpirationEntry],
+        op: Callable[[Any, Any], bool],
+        expected: bool,
+    ) -> None:
+        lower, higher = ordered_pair
+        assert op(lower, higher) is expected
+
+    @pytest.mark.parametrize(("op", "expected"), HI_LO_CASES)
+    def test_higher_vs_lower(
+        self,
+        ordered_pair: tuple[OrderExpirationEntry, OrderExpirationEntry],
+        op: Callable[[Any, Any], bool],
+        expected: bool,
+    ) -> None:
+        lower, higher = ordered_pair
+        assert op(higher, lower) is expected
+
+    @pytest.mark.parametrize(("op", "expected"), EQUAL_CASES)
+    def test_equal_entries(
         self,
         entry: OrderExpirationEntry,
-        entry_later_expiry: OrderExpirationEntry,
+        entry_clone: OrderExpirationEntry,
+        op: Callable[[Any, Any], bool],
+        expected: bool,
     ) -> None:
-        """Primary key: expiration_timestamp ascending."""
-        assert entry < entry_later_expiry
-        assert sorted([entry_later_expiry, entry]) == [entry, entry_later_expiry]
+        assert op(entry, entry_clone) is expected
 
-    def test_same_expiry_earlier_order_id_is_less(
+    def test_sorted_pair(
+        self,
+        ordered_pair: tuple[OrderExpirationEntry, OrderExpirationEntry],
+    ) -> None:
+        """sorted() places the lower entry first regardless of input order."""
+        lower, higher = ordered_pair
+        assert sorted([higher, lower]) == [lower, higher]
+
+    def test_max_pair(
+        self,
+        ordered_pair: tuple[OrderExpirationEntry, OrderExpirationEntry],
+    ) -> None:
+        lower, higher = ordered_pair
+        assert max(lower, higher) is higher
+
+    @pytest.mark.parametrize("op", ALL_OPS)
+    def test_ordering_non_entry_unsupported(
         self,
         entry: OrderExpirationEntry,
-        entry_same_expiry_later_id: OrderExpirationEntry,
+        op: Callable[[Any, Any], bool],
     ) -> None:
-        """Secondary key: order_id lexicographic ascending."""
-        # entry.order_id = "order-001" < entry_same_expiry_later_id.order_id = "order-999"
-        assert entry < entry_same_expiry_later_id
-        assert sorted([entry_same_expiry_later_id, entry]) == [
-            entry,
-            entry_same_expiry_later_id,
-        ]
-
-    def test_equal_entries_not_less_than(self, entry: OrderExpirationEntry) -> None:
-        clone = OrderExpirationEntry(
-            entry.trading_pair,
-            entry.order_id,
-            entry.timestamp,
-            entry.expiration_timestamp,
-        )
-        assert not (entry < clone)
-        assert not (clone < entry)
-
-    def test_le_gt_ge_earlier_vs_later_expiry(
-        self,
-        entry: OrderExpirationEntry,
-        entry_later_expiry: OrderExpirationEntry,
-    ) -> None:
-        assert entry <= entry_later_expiry
-        assert entry_later_expiry > entry
-        assert entry_later_expiry >= entry
-        assert max(entry, entry_later_expiry) is entry_later_expiry
-
-    def test_le_gt_ge_same_expiry_different_id(
-        self,
-        entry: OrderExpirationEntry,
-        entry_same_expiry_later_id: OrderExpirationEntry,
-    ) -> None:
-        assert entry <= entry_same_expiry_later_id
-        assert entry_same_expiry_later_id > entry
-        assert entry_same_expiry_later_id >= entry
-        assert max(entry, entry_same_expiry_later_id) is entry_same_expiry_later_id
-
-    def test_le_ge_equal_entries(self, entry: OrderExpirationEntry) -> None:
-        clone = OrderExpirationEntry(
-            entry.trading_pair,
-            entry.order_id,
-            entry.timestamp,
-            entry.expiration_timestamp,
-        )
-        assert entry <= clone
-        assert entry >= clone
-        assert (entry > clone) is False
-
-    def test_ordering_non_entry_unsupported(self, entry: OrderExpirationEntry) -> None:
         with pytest.raises(TypeError):
-            entry <= 42  # type: ignore[operator]  # noqa: B015
-        with pytest.raises(TypeError):
-            entry > 42  # type: ignore[operator]  # noqa: B015
-        with pytest.raises(TypeError):
-            entry >= 42  # type: ignore[operator]  # noqa: B015
+            op(entry, 42)
 
     def test_sort_by_expiry_then_order_id(self) -> None:
         """sorted() should respect C++ operator< ordering."""
