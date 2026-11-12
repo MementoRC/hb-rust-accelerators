@@ -28,6 +28,7 @@ rust = ">=1.75"
 maturin = ">=1.13.1,<2.0"
 uv = "*"
 tomli = "*"
+pip = "*"
 
 [tool.pixi.feature.dev.dependencies]
 pytest = ">=8.0"
