@@ -9,6 +9,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from scripts.migration_config import PROJECT_ROOT, read_status, write_status
+
 _PIXI = shutil.which("pixi") or "/home/memento/.conda/envs/ClaudeCode/bin/pixi"
 
 if sys.version_info >= (3, 11):
@@ -18,8 +20,6 @@ else:
         import tomllib
     except ImportError:
         import tomli as tomllib
-
-from scripts.migration_config import PROJECT_ROOT, read_status, write_status
 
 
 def promote_files(project_root: Path, module_name: str) -> None:
@@ -199,7 +199,7 @@ def update_supersedes(
             # Insert before the closing bracket of test_paths
             text = re.sub(
                 r"(test_paths\s*=\s*\[)(.*?)(\])",
-                lambda m: (
+                lambda m, path=path: (
                     m.group(1)
                     + m.group(2).rstrip()
                     + (", " if m.group(2).strip() else "")
@@ -269,7 +269,7 @@ def integrate_module(module_name: str, project_root: Path | None = None) -> int:
         print(f"Post-integration tests FAILED:\n{test_result.stderr}")
         return test_result.returncode
 
-    print(f"Integration complete and tests pass.")
+    print("Integration complete and tests pass.")
     return 0
 
 
