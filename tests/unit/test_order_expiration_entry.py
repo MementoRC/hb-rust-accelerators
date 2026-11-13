@@ -391,3 +391,48 @@ class TestRustEqHash:
         a = OrderExpirationEntry("BTC-USDT", "ord-1", 1000.0, 2000.0)
         s = {a}
         assert a in s
+
+
+def _load_python_fallback_class() -> type:
+    """Load the pure-Python fallback class even when the Rust backend is present.
+
+    The fallback is only defined in the module's ``except ImportError`` branch, so
+    re-execute the module source with ``_core`` blocked from importing.
+    """
+    import importlib.util
+    import sys
+
+    import rust_accelerators.order_expiration_entry as mod
+
+    spec = importlib.util.spec_from_file_location("_oee_python_fallback", mod.__file__)
+    assert spec is not None and spec.loader is not None
+    fallback_mod = importlib.util.module_from_spec(spec)
+    saved = sys.modules.get("rust_accelerators._core", ...)
+    sys.modules["rust_accelerators._core"] = None  # type: ignore[assignment]
+    try:
+        spec.loader.exec_module(fallback_mod)
+    finally:
+        if saved is ...:
+            del sys.modules["rust_accelerators._core"]
+        else:
+            sys.modules["rust_accelerators._core"] = saved
+    assert fallback_mod.is_accelerated() is False
+    return fallback_mod.OrderExpirationEntry
+
+
+class TestReprParityWithPythonFallback:
+    """Rust __repr__ must be byte-identical to the Python fallback's __repr__."""
+
+    @pytest.mark.parametrize(
+        "value",
+        [0.0, -0.0, 0.1, 1700000000.0, 1700000000.123456, 1e16, 1.5e-7, float("inf")],
+    )
+    def test_repr_matches_fallback(self, value: float) -> None:
+        pytest.importorskip("rust_accelerators._core", reason="_core not importable")
+        from rust_accelerators._core import order_expiration_entry as rust_oee
+
+        rust_cls = rust_oee.OrderExpirationEntry
+        py_cls = _load_python_fallback_class()
+        assert repr(rust_cls("BTC-USDT", "ord-1", value, value)) == repr(
+            py_cls("BTC-USDT", "ord-1", value, value)
+        )

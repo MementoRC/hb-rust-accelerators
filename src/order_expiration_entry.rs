@@ -1,5 +1,5 @@
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyList, PyType};
+use pyo3::types::{PyDict, PyFloat, PyList, PyType};
 use pyo3::Borrowed;
 
 /// Rust implementation of hummingbot.core.data_type.OrderExpirationEntry.
@@ -69,11 +69,18 @@ impl OrderExpirationEntry {
     }
 
     /// String representation matching the original Cython __repr__.
-    pub fn __repr__(&self) -> String {
-        format!(
+    ///
+    /// Floats are formatted with Python's own float repr so the output is
+    /// byte-identical to the pure-Python fallback (exponents, inf/nan, -0.0).
+    pub fn __repr__(&self, py: Python<'_>) -> PyResult<String> {
+        let ts = PyFloat::new(py, self.timestamp).repr()?.to_string();
+        let exp = PyFloat::new(py, self.expiration_timestamp)
+            .repr()?
+            .to_string();
+        Ok(format!(
             "OrderExpirationEntry('{}', '{}', {}, '{}')",
-            self.trading_pair, self.order_id, self.timestamp, self.expiration_timestamp
-        )
+            self.trading_pair, self.order_id, ts, exp
+        ))
     }
 
     /// Rich comparison: less-than.
