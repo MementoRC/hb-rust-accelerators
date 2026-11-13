@@ -106,7 +106,8 @@ def scaffold_workspace(
         f"## Original API Surface\n\nTODO: Agent will populate from source analysis.\n\n"
         f"## Data Structures\n\nTODO: Agent will populate C++ → Rust mapping.\n\n"
         f"## Suggested Crate Dependencies\n\nTODO: Agent will suggest based on source analysis.\n\n"
-        f"## Fallback Feasibility\n\nTODO: Agent will assess if pure-Python fallback is practical.\n\n"
+        f"## Fallback Feasibility\n\n"
+        f"TODO: Agent will assess if pure-Python fallback is practical.\n\n"
         f"## Existing Tests\n\nTODO: Agent will extract from hummingbot test suite.\n\n"
         f"## Known Complexity\n\nTODO: Agent will flag tricky patterns.\n"
     )
