@@ -54,6 +54,9 @@ types-setuptools = "*"
 [tool.pixi.feature.ci.pypi-dependencies]
 detect-secrets = "*"
 
+[tool.pixi.feature.ci.tasks]
+secrets-check = "git ls-files -z | xargs -0 detect-secrets-hook --baseline .secrets.baseline"
+
 [tool.pixi.feature.quality-extended.dependencies]
 bandit = ">=1.8.0"
 pip-audit = "*"
