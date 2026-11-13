@@ -33,7 +33,7 @@ jobs:
       editable-install: true
       package-path: "."
       allowed-licenses: "MIT, Apache-2.0, BSD-3-Clause, BSD-2-Clause, ISC, Unicode-3.0, Zlib"
-    secrets: inherit
+    secrets: inherit  # pragma: allowlist secret
 
   rust-build:
     name: "Rust Build & Test"

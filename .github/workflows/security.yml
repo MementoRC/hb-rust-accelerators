@@ -73,12 +73,7 @@ jobs:
         pixi-version: v0.82.0
         environments: ci
     - name: Run secrets detection
-      run: |
-        pixi run -e ci detect-secrets scan --baseline .secrets.baseline --all-files --exclude-files '^\.pixi/'
-        if [ $? -ne 0 ]; then
-          echo "::error::New secrets detected!"
-          exit 1
-        fi
+      run: pixi run -e ci secrets-check
 
   security-summary:
     name: Security Summary
