@@ -18,14 +18,16 @@ def get_migrations_summary(migrations_dir: Path) -> list[dict]:
         status_file = child / "status.json"
         if child.is_dir() and status_file.exists():
             status = read_status(child)
-            results.append({
-                "name": child.name,
-                "module": status.module,
-                "status": status.status,
-                "issue_number": status.issue_number,
-                "tier": status.tier,
-                "created": status.created,
-            })
+            results.append(
+                {
+                    "name": child.name,
+                    "module": status.module,
+                    "status": status.status,
+                    "issue_number": status.issue_number,
+                    "tier": status.tier,
+                    "created": status.created,
+                }
+            )
     return results
 
 

@@ -29,33 +29,34 @@ def wire_module(project_root: Path, module_name: str, module_src: Path) -> None:
     # #[path] resolves relative to the file containing the directive (src/lib.rs),
     # so compute a relative path from lib_rs.parent to module_src using os.path.relpath.
     import os
+
     rel_path = os.path.relpath(module_src, lib_rs.parent)
     mod_decl = (
-        f'{WIRE_START.format(module=module_name)}\n'
+        f"{WIRE_START.format(module=module_name)}\n"
         f'#[path = "{rel_path}"]\n'
-        f'mod {module_name};\n'
-        f'{WIRE_END.format(module=module_name)}\n'
+        f"mod {module_name};\n"
+        f"{WIRE_END.format(module=module_name)}\n"
     )
 
     # Insert mod declaration before #[pymodule]
     text = re.sub(
-        r'(#\[pymodule\])',
-        f'{mod_decl}\n\\1',
+        r"(#\[pymodule\])",
+        f"{mod_decl}\n\\1",
         text,
         count=1,
     )
 
     # Add submodule registration before Ok(())
     reg_code = (
-        f'{WIRE_REG_START.format(module=module_name)}\n'
+        f"{WIRE_REG_START.format(module=module_name)}\n"
         f'    let {module_name}_module = PyModule::new(m.py(), "{module_name}")?;\n'
-        f'    {module_name}::register({module_name}_module.as_borrowed())?;\n'
-        f'    m.add_submodule(&{module_name}_module)?;\n'
-        f'{WIRE_REG_END.format(module=module_name)}\n'
+        f"    {module_name}::register({module_name}_module.as_borrowed())?;\n"
+        f"    m.add_submodule(&{module_name}_module)?;\n"
+        f"{WIRE_REG_END.format(module=module_name)}\n"
     )
     text = text.replace(
-        '    Ok(())',
-        f'{reg_code}    Ok(())',
+        "    Ok(())",
+        f"{reg_code}    Ok(())",
         1,
     )
 
@@ -68,12 +69,22 @@ def unwire_module(project_root: Path, module_name: str) -> None:
     text = lib_rs.read_text()
 
     # Remove mod declaration block (including the blank line after)
-    mod_pattern = re.escape(WIRE_START.format(module=module_name)) + r'.*?' + re.escape(WIRE_END.format(module=module_name)) + r'\n*'
-    text = re.sub(mod_pattern, '', text, flags=re.DOTALL)
+    mod_pattern = (
+        re.escape(WIRE_START.format(module=module_name))
+        + r".*?"
+        + re.escape(WIRE_END.format(module=module_name))
+        + r"\n*"
+    )
+    text = re.sub(mod_pattern, "", text, flags=re.DOTALL)
 
     # Remove registration block
-    reg_pattern = re.escape(WIRE_REG_START.format(module=module_name)) + r'.*?' + re.escape(WIRE_REG_END.format(module=module_name)) + r'\n'
-    text = re.sub(reg_pattern, '', text, flags=re.DOTALL)
+    reg_pattern = (
+        re.escape(WIRE_REG_START.format(module=module_name))
+        + r".*?"
+        + re.escape(WIRE_REG_END.format(module=module_name))
+        + r"\n"
+    )
+    text = re.sub(reg_pattern, "", text, flags=re.DOTALL)
 
     lib_rs.write_text(text)
 
@@ -132,7 +143,16 @@ def run_test_migration(module_name: str, project_root: Path | None = None) -> in
 
         # Test
         test_result = subprocess.run(
-            [_PIXI, "run", "python", "-m", "pytest", f"migrations/{module_name}/tests/", "-v", "--tb=short"],
+            [
+                _PIXI,
+                "run",
+                "python",
+                "-m",
+                "pytest",
+                f"migrations/{module_name}/tests/",
+                "-v",
+                "--tb=short",
+            ],
             cwd=project_root,
             capture_output=True,
             text=True,

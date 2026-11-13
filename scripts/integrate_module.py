@@ -74,8 +74,8 @@ def wire_permanently(project_root: Path, module_name: str) -> None:
     # Add mod declaration before #[pymodule]
     if f"mod {module_name};" not in text:
         text = re.sub(
-            r'(#\[pymodule\])',
-            f'mod {module_name};\n\n\\1',
+            r"(#\[pymodule\])",
+            f"mod {module_name};\n\n\\1",
             text,
             count=1,
         )
@@ -84,10 +84,10 @@ def wire_permanently(project_root: Path, module_name: str) -> None:
     if f"{module_name}::register" not in text:
         reg_code = (
             f'\n    let {module_name}_module = PyModule::new(m.py(), "{module_name}")?;\n'
-            f'    {module_name}::register({module_name}_module.as_borrowed())?;\n'
-            f'    m.add_submodule(&{module_name}_module)?;\n\n'
+            f"    {module_name}::register({module_name}_module.as_borrowed())?;\n"
+            f"    m.add_submodule(&{module_name}_module)?;\n\n"
         )
-        text = text.replace('    Ok(())', f'{reg_code}    Ok(())', 1)
+        text = text.replace("    Ok(())", f"{reg_code}    Ok(())", 1)
 
     lib_rs.write_text(text)
 
@@ -137,10 +137,10 @@ def merge_cargo_dependencies(project_root: Path, module_name: str) -> None:
                     parts.append(f'{k} = "{v}"')
                 elif isinstance(v, list):
                     items = ", ".join(f'"{i}"' for i in v)
-                    parts.append(f'{k} = [{items}]')
+                    parts.append(f"{k} = [{items}]")
                 elif isinstance(v, bool):
-                    parts.append(f'{k} = {"true" if v else "false"}')
-            dep_lines.append(f'{dep_name} = {{ {", ".join(parts)} }}')
+                    parts.append(f"{k} = {'true' if v else 'false'}")
+            dep_lines.append(f"{dep_name} = {{ {', '.join(parts)} }}")
 
     # Insert after last dependency line
     lines = root_text.split("\n")
@@ -198,11 +198,13 @@ def update_supersedes(
         for path in new_paths:
             # Insert before the closing bracket of test_paths
             text = re.sub(
-                r'(test_paths\s*=\s*\[)(.*?)(\])',
+                r"(test_paths\s*=\s*\[)(.*?)(\])",
                 lambda m: (
-                    m.group(1) + m.group(2).rstrip() +
-                    (", " if m.group(2).strip() else "") +
-                    f'"{path}"' + m.group(3)
+                    m.group(1)
+                    + m.group(2).rstrip()
+                    + (", " if m.group(2).strip() else "")
+                    + f'"{path}"'
+                    + m.group(3)
                 ),
                 text,
                 flags=re.DOTALL,
@@ -234,9 +236,7 @@ def integrate_module(module_name: str, project_root: Path | None = None) -> int:
     # Update supersedes list in pyproject.toml
     print("Updating supersedes list in pyproject.toml...")
     test_paths = [
-        f"tests/{p.replace('.', '/')}.py"
-        for p in status.source_files
-        if p.endswith(".pyx")
+        f"tests/{p.replace('.', '/')}.py" for p in status.source_files if p.endswith(".pyx")
     ]
     update_supersedes(project_root, module_name, status.module, test_paths)
 
