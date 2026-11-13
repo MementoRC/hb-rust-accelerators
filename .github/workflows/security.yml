@@ -47,16 +47,13 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-    - name: Set up Python
-      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+    - name: Set up pixi
+      uses: prefix-dev/setup-pixi@5185adfbffb4bd703da3010310260805d89ebb11 # v0.9.6
       with:
-        python-version: '3.12'
-    - name: Install dependencies
-      run: |
-        pip install --upgrade pip
-        pip install safety bandit
+        pixi-version: v0.82.0
+        environments: ci
     - name: Run Bandit security scan
-      run: bandit -r python/rust_accelerators/ -f json -o bandit-report.json || true
+      run: pixi run -e ci bandit -r python/rust_accelerators/ -f json -o bandit-report.json || true
     - name: Upload security reports
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
       if: always()
@@ -70,11 +67,14 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-    - name: Install detect-secrets
-      run: pip install detect-secrets
+    - name: Set up pixi
+      uses: prefix-dev/setup-pixi@5185adfbffb4bd703da3010310260805d89ebb11 # v0.9.6
+      with:
+        pixi-version: v0.82.0
+        environments: ci
     - name: Run secrets detection
       run: |
-        detect-secrets scan --baseline .secrets.baseline --all-files
+        pixi run -e ci detect-secrets scan --baseline .secrets.baseline --all-files --exclude-files '^\.pixi/'
         if [ $? -ne 0 ]; then
           echo "::error::New secrets detected!"
           exit 1
