@@ -26,9 +26,7 @@ class MigrationConfig:
     source_checkout: str = DEFAULT_SOURCE_CHECKOUT
     issue_repo: str = DEFAULT_ISSUE_REPO
 
-    def module_dir_name(
-        self, module_path: str, migrations_root: Path | None = None
-    ) -> str:
+    def module_dir_name(self, module_path: str, migrations_root: Path | None = None) -> str:
         """Derive directory name from module path, handling conflicts."""
         last_segment = module_path.rsplit(".", 1)[-1]
         if migrations_root is None:
@@ -75,9 +73,7 @@ def get_migration_config(pyproject_path: Path | None = None) -> MigrationConfig:
     with open(pyproject_path, "rb") as f:
         data = tomllib.load(f)
 
-    migration_section = (
-        data.get("tool", {}).get("hummingbot", {}).get("migration", {})
-    )
+    migration_section = data.get("tool", {}).get("hummingbot", {}).get("migration", {})
     return MigrationConfig(
         source_checkout=migration_section.get("source_checkout", DEFAULT_SOURCE_CHECKOUT),
         issue_repo=migration_section.get("issue_repo", DEFAULT_ISSUE_REPO),

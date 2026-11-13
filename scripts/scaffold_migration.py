@@ -34,7 +34,7 @@ def _update_cargo_workspace(project_root: Path, member_path: str) -> None:
     cargo_path = project_root / "Cargo.toml"
     text = cargo_path.read_text()
 
-    pattern = r'(members\s*=\s*\[)(.*?)(\])'
+    pattern = r"(members\s*=\s*\[)(.*?)(\])"
     match = re.search(pattern, text, re.DOTALL)
     if match:
         members_content = match.group(2)
@@ -71,7 +71,9 @@ def scaffold_workspace(
     # Create __init__.py files so the workspace is importable as a package
     # (required for test imports like: from migrations.<name>.python.<name> import ...)
     if not (project_root / "migrations" / "__init__.py").exists():
-        (project_root / "migrations" / "__init__.py").write_text("# Migration workspaces package namespace.\n")
+        (project_root / "migrations" / "__init__.py").write_text(
+            "# Migration workspaces package namespace.\n"
+        )
     (ws / "__init__.py").write_text(f"# {module_name} migration workspace.\n")
     (ws / "python" / "__init__.py").write_text(f"# Python wrappers for {module_name} migration.\n")
     (ws / "tests" / "__init__.py").write_text(f"# Tests for {module_name} migration.\n")
