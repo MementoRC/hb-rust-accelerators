@@ -5,13 +5,15 @@ on:
     types: [opened, synchronize, reopened]
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   auto-merge:
     name: "Auto-Merge Dependabot PR"
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     if: github.actor == 'dependabot[bot]'
     steps:
       - name: Approve PR
