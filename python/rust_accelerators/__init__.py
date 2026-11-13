@@ -6,8 +6,8 @@ from rust_accelerators.metrics import (
     calculate_max_drawdown,
     calculate_profit_factor,
     calculate_sharpe_ratio,
-    is_accelerated,
 )
+from rust_accelerators.metrics import is_accelerated as _metrics_is_accelerated
 
 __all__ = [
     "__version__",
@@ -18,4 +18,9 @@ __all__ = [
     "is_accelerated",
 ]
 
-from rust_accelerators import order_expiration_entry  # noqa: F401
+from rust_accelerators import order_expiration_entry  # noqa: E402
+
+
+def is_accelerated() -> bool:
+    """Return True only if every accelerated module is using the Rust backend."""
+    return _metrics_is_accelerated() and order_expiration_entry.is_accelerated()
