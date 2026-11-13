@@ -89,6 +89,30 @@ impl OrderExpirationEntry {
         }
     }
 
+    /// Equality comparison — matches Python fallback semantics.
+    ///
+    /// Two entries are equal iff all four fields match. Non-entry operands
+    /// yield `NotImplemented` (PyO3 argument-extraction failure on comparison slots).
+    pub fn __eq__(&self, other: &OrderExpirationEntry) -> bool {
+        self.trading_pair == other.trading_pair
+            && self.order_id == other.order_id
+            && self.timestamp == other.timestamp
+            && self.expiration_timestamp == other.expiration_timestamp
+    }
+
+    /// Hash — consistent with `__eq__` (all four fields).
+    /// -0.0 is normalised to 0.0 because they compare equal.
+    pub fn __hash__(&self) -> isize {
+        use std::hash::{Hash, Hasher};
+        let bits = |v: f64| (if v == 0.0 { 0.0_f64 } else { v }).to_bits();
+        let mut hasher = std::collections::hash_map::DefaultHasher::new();
+        self.trading_pair.hash(&mut hasher);
+        self.order_id.hash(&mut hasher);
+        bits(self.timestamp).hash(&mut hasher);
+        bits(self.expiration_timestamp).hash(&mut hasher);
+        hasher.finish() as isize
+    }
+
     /// Rich comparison: less-than-or-equal (same key as `__lt__`).
     pub fn __le__(&self, other: &OrderExpirationEntry) -> bool {
         if self.expiration_timestamp == other.expiration_timestamp {
