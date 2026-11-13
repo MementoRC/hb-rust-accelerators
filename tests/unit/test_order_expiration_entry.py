@@ -402,7 +402,7 @@ def _load_python_fallback_class() -> type:
     import importlib.util
     import sys
 
-    import rust_accelerators.order_expiration_entry as mod
+    mod = importlib.import_module("rust_accelerators.order_expiration_entry")
 
     spec = importlib.util.spec_from_file_location("_oee_python_fallback", mod.__file__)
     assert spec is not None and spec.loader is not None

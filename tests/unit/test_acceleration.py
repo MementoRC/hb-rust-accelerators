@@ -6,7 +6,8 @@ import importlib.util
 
 import pytest
 import rust_accelerators
-from rust_accelerators import metrics, order_expiration_entry
+import rust_accelerators.metrics
+import rust_accelerators.order_expiration_entry
 
 try:
     _core_available = importlib.util.find_spec("rust_accelerators._core") is not None
@@ -24,16 +25,14 @@ def test_package_is_accelerated() -> None:
 
 
 def test_metrics_is_accelerated() -> None:
-    assert metrics.is_accelerated() is True
+    assert rust_accelerators.metrics.is_accelerated() is True
 
 
 def test_order_expiration_entry_is_accelerated() -> None:
-    assert order_expiration_entry.is_accelerated() is True
+    assert rust_accelerators.order_expiration_entry.is_accelerated() is True
 
 
 def test_order_expiration_entry_is_rust_class() -> None:
-    from rust_accelerators import _core
-
-    cls = order_expiration_entry.OrderExpirationEntry
-    assert cls is _core.order_expiration_entry.OrderExpirationEntry
+    cls = rust_accelerators.order_expiration_entry.OrderExpirationEntry
+    assert cls is rust_accelerators._core.order_expiration_entry.OrderExpirationEntry
     assert cls.__module__ != "rust_accelerators.order_expiration_entry"
