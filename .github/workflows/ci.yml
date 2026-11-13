@@ -56,8 +56,10 @@ jobs:
     if: github.event_name == 'pull_request' && github.base_ref == 'main'
     steps:
       - name: Check source branch
+        env:
+          HEAD_REF: ${{ github.head_ref }}
         run: |
-          if [ "${{ github.head_ref }}" != "development" ]; then
+          if [ "$HEAD_REF" != "development" ]; then
             echo "PRs to main must come from development branch"
             exit 1
           fi
