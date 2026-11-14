@@ -38,6 +38,8 @@ jobs:
   rust-build:
     name: "Rust Build & Test"
     runs-on: ubuntu-latest
+    env:
+      RUST_ACCELERATORS_REQUIRE_RUST: "1"
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - uses: prefix-dev/setup-pixi@5185adfbffb4bd703da3010310260805d89ebb11 # v0.9.6
