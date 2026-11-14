@@ -114,10 +114,14 @@ def calculate_all_metrics(
 
     :param pnl_series: Cumulative P&L values as numpy array
     :param periods_per_year: Annualization factor for Sharpe
-    :return: (max_drawdown, max_drawdown_pct, sharpe_ratio, profit_factor)
+    :return: (max_drawdown, max_drawdown_pct, sharpe_ratio, profit_factor).
+        Empty input returns (0.0, 0.0, 0.0, 0.0).
     """
     if _ACCELERATED:
         return _rs_calculate_all_metrics(pnl_series, periods_per_year)
+
+    if len(pnl_series) == 0:
+        return (0.0, 0.0, 0.0, 0.0)
 
     max_dd, max_dd_pct = calculate_max_drawdown(pnl_series)
     sharpe = calculate_sharpe_ratio(pnl_series, periods_per_year)
