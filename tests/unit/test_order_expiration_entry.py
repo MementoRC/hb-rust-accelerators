@@ -12,6 +12,7 @@ for this module) but derived from:
 
 from __future__ import annotations
 
+import importlib
 import operator
 from collections.abc import Callable
 from typing import Any
@@ -394,30 +395,15 @@ class TestRustEqHash:
 
 
 def _load_python_fallback_class() -> type:
-    """Load the pure-Python fallback class even when the Rust backend is present.
-
-    The fallback is only defined in the module's ``except ImportError`` branch, so
-    re-execute the module source with ``_core`` blocked from importing.
-    """
-    import importlib.util
-    import sys
-
-    mod = importlib.import_module("rust_accelerators.order_expiration_entry")
-
-    spec = importlib.util.spec_from_file_location("_oee_python_fallback", mod.__file__)
-    assert spec is not None and spec.loader is not None
-    fallback_mod = importlib.util.module_from_spec(spec)
-    saved = sys.modules.get("rust_accelerators._core", ...)
-    sys.modules["rust_accelerators._core"] = None  # type: ignore[assignment]
+    """Return the pure-Python fallback class, even when the Rust backend is present."""
+    pure_mod = importlib.import_module("rust_accelerators._pure_order_expiration_entry")
+    py_cls = pure_mod.OrderExpirationEntry
     try:
-        spec.loader.exec_module(fallback_mod)
-    finally:
-        if saved is ...:
-            del sys.modules["rust_accelerators._core"]
-        else:
-            sys.modules["rust_accelerators._core"] = saved
-    assert fallback_mod.is_accelerated() is False
-    return fallback_mod.OrderExpirationEntry
+        from rust_accelerators._core import order_expiration_entry as rust_oee
+    except ImportError:
+        return py_cls
+    assert py_cls is not rust_oee.OrderExpirationEntry
+    return py_cls
 
 
 class TestReprParityWithPythonFallback:
