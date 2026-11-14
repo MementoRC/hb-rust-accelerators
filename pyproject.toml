@@ -129,6 +129,7 @@ markers = [
     "integration: marks tests as integration tests",
     "benchmark: marks tests as benchmark tests",
     "asyncio: marks tests as asyncio tests",
+    "parity: Rust vs Python parity contract tests (require Rust built)",
 ]
 log_cli = true
 log_cli_level = "DEBUG"
