@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 
 import pytest
 import rust_accelerators
@@ -14,10 +15,19 @@ try:
 except ImportError:
     _core_available = False
 
+_require_rust = os.environ.get("RUST_ACCELERATORS_REQUIRE_RUST") == "1"
+
 pytestmark = pytest.mark.skipif(
-    not _core_available,
+    not _core_available and not _require_rust,
     reason="rust_accelerators._core extension is not built",
 )
+
+
+def test_core_extension_importable() -> None:
+    assert _core_available, (
+        "RUST_ACCELERATORS_REQUIRE_RUST=1 but rust_accelerators._core is not "
+        "importable (extension not built?)"
+    )
 
 
 def test_package_is_accelerated() -> None:
