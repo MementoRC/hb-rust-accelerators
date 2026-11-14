@@ -27,8 +27,11 @@ if TYPE_CHECKING:
     import pandas as pd
 
 try:
-    from rust_accelerators._core.order_expiration_entry import OrderExpirationEntry  # noqa: F401
+    # The PyO3 submodule is not registered in sys.modules, so a dotted
+    # "from _core.order_expiration_entry import ..." fails; use attribute access.
+    from rust_accelerators._core import order_expiration_entry as _oee
 
+    OrderExpirationEntry = _oee.OrderExpirationEntry
     _ACCELERATED = True
 except ImportError:
     _ACCELERATED = False
