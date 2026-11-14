@@ -29,11 +29,13 @@ try:
     OrderExpirationEntry = _oee.OrderExpirationEntry
     _ACCELERATED = True
 except ImportError:
-    from rust_accelerators._pure_order_expiration_entry import (  # noqa: F401
+    from rust_accelerators._pure_order_expiration_entry import (
         OrderExpirationEntry,
     )
 
     _ACCELERATED = False
+
+__all__ = ["OrderExpirationEntry", "is_accelerated"]
 
 
 def is_accelerated() -> bool:
