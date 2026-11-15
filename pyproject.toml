@@ -37,6 +37,7 @@ pytest-cov = "*"
 pytest-xdist = "*"
 pytest-timeout = "*"
 pytest-benchmark = ">=4.0"
+pandas = ">=2"
 ruff = "*"
 mypy = "*"
 
