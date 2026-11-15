@@ -94,6 +94,7 @@ py312 = { features = ["py312", "dev"], solve-group = "py312" }
 [tool.pixi.tasks]
 test = "pytest tests/"
 test-unit = "pytest tests/unit/"
+test-fallback = { cmd = "pytest tests/unit/", env = { RUST_ACCELERATORS_FORCE_FALLBACK = "1", PYTHONPATH = "python" } }
 lint = "ruff check python/rust_accelerators tests"
 lint-fix = "ruff check --fix python/rust_accelerators tests"
 format = "ruff format python/rust_accelerators tests"

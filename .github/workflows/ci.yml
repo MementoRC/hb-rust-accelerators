@@ -52,6 +52,19 @@ jobs:
       - name: Test with Rust acceleration
         run: pixi run test
 
+  python-fallback:
+    name: "Python fallback tests"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: prefix-dev/setup-pixi@5185adfbffb4bd703da3010310260805d89ebb11 # v0.9.6
+        with:
+          pixi-version: v0.82.0
+      - name: Install dependencies
+        run: pixi install
+      - name: Test pure-Python fallback (Rust extension disabled)
+        run: pixi run test-fallback
+
   branch-policy:
     name: "Branch Policy"
     runs-on: ubuntu-latest
@@ -69,12 +82,12 @@ jobs:
   ci-success:
     name: "CI Success"
     runs-on: ubuntu-latest
-    needs: [checks, rust-build]
+    needs: [checks, rust-build, python-fallback]
     if: always()
     steps:
       - name: Check CI status
         run: |
-          if [ "${{ needs.checks.result }}" != "success" ] || [ "${{ needs.rust-build.result }}" != "success" ]; then
+          if [ "${{ needs.checks.result }}" != "success" ] || [ "${{ needs.rust-build.result }}" != "success" ] || [ "${{ needs.python-fallback.result }}" != "success" ]; then
             echo "CI failed"
             exit 1
           fi
