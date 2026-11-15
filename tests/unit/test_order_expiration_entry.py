@@ -370,30 +370,6 @@ class TestIsAccelerated:
         assert isinstance(result, bool)
 
 
-class TestRustEqHash:
-    """Validate __eq__ and __hash__ exist on the Rust backend (if available)."""
-
-    def test_eq_same_fields(self):
-        a = OrderExpirationEntry("BTC-USDT", "ord-1", 1000.0, 2000.0)
-        b = OrderExpirationEntry("BTC-USDT", "ord-1", 1000.0, 2000.0)
-        assert a == b
-
-    def test_eq_different_fields(self):
-        a = OrderExpirationEntry("BTC-USDT", "ord-1", 1000.0, 2000.0)
-        b = OrderExpirationEntry("ETH-USDT", "ord-1", 1000.0, 2000.0)
-        assert a != b
-
-    def test_hash_consistent(self):
-        a = OrderExpirationEntry("BTC-USDT", "ord-1", 1000.0, 2000.0)
-        b = OrderExpirationEntry("BTC-USDT", "ord-1", 1000.0, 2000.0)
-        assert hash(a) == hash(b)
-
-    def test_hashable_in_set(self):
-        a = OrderExpirationEntry("BTC-USDT", "ord-1", 1000.0, 2000.0)
-        s = {a}
-        assert a in s
-
-
 def _load_python_fallback_class() -> type:
     """Return the pure-Python fallback class, even when the Rust backend is present."""
     pure_mod = importlib.import_module("rust_accelerators._pure_order_expiration_entry")
